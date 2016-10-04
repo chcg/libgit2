@@ -46,6 +46,6 @@ after_build:
         $npplibgit2FileName = "git2.$env:PLATFORM.$env:CONFIGURATION.$env:PLATFORMTOOLSET.dll"
 
         if ($env:CONFIGURATION -eq "Release") {
-           Push-AppveyorArtifact "Release  \git2.dll" -FileName "$npplibgit2FileName"
+           Push-AppveyorArtifact "Release\git2.dll" -FileName "$npplibgit2FileName"
         }
 
