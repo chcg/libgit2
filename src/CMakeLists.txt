@@ -60,7 +60,7 @@ check_function_exists(getentropy GIT_RAND_GETENTROPY)
 # Find required dependencies
 
 if(WIN32)
-	list(APPEND LIBGIT2_SYSTEM_LIBS ws2_32)
+	list(APPEND LIBGIT2_SYSTEM_LIBS ws2_32 Advapi32)
 elseif(CMAKE_SYSTEM_NAME MATCHES "(Solaris|SunOS)")
 	list(APPEND LIBGIT2_SYSTEM_LIBS socket nsl)
 	list(APPEND LIBGIT2_PC_LIBS "-lsocket" "-lnsl")
