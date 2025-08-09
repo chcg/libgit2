@@ -1,0 +1,38 @@
+name: my_CI_build
+
+on: [push, pull_request]
+
+jobs:
+
+  build_windows:
+
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        build_configuration: [Release]
+        build_platform: ["Visual Studio 17 2022"]
+        build_arch: [x64, Win32, ARM64]
+
+    steps:
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: generate cmake
+        run: |
+          cmake -G "${{ matrix.build_platform }}" -DCMAKE_BUILD_TYPE="${{ matrix.build_configuration }}" -A "${{ matrix.build_arch }}" -D BUILD_TESTS=OFF -B _build
+
+      - name: build cmake
+        run: |
+          cmake --build _build --config ${{ matrix.build_configuration }}
+
+      - name: Archive artifacts for ${{ matrix.build_arch }}
+        if: matrix.build_configuration == 'Release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: libgit2_${{ matrix.build_arch }}
+          path: _build\${{ matrix.build_configuration }}\git2.dll

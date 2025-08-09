@@ -1,0 +1,60 @@
+version: '{build}'
+image: Visual Studio 2022
+
+environment:
+  matrix:
+  - PlatformToolset: v143
+
+platform:
+    - x64
+    - Win32
+    - arm64
+
+configuration:
+    - Release
+    #- Debug
+
+install:
+    - if "%platform%"=="x64" set archi=amd64
+    - if "%platform%"=="x64" set platform_input=x64
+
+    - if "%platform%"=="Win32" set archi=x86
+    - if "%platform%"=="Win32" set platform_input=Win32
+
+    - if "%platform%"=="arm64" set archi=amd64_arm64
+    - if "%platform%"=="arm64" set platform_input=ARM64
+
+    - if "%PlatformToolset%"=="v141"    call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %archi%
+    - if "%PlatformToolset%"=="v142"    call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %archi%
+    - if "%PlatformToolset%"=="v143"    call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" %archi%
+
+build_script:
+- ps: |
+    Write-Output "Configuration: $env:CONFIGURATION"
+    Write-Output "Platform: $env:PLATFORM_INPUT"
+    $generator = switch ($env:PLATFORMTOOLSET)
+    {
+        "v141" {"Visual Studio 15 2017"}
+        "v142" {"Visual Studio 16 2019"}
+        "v143" {"Visual Studio 17 2022"}
+    }
+    mkdir build
+    cd build
+    cmake -D BUILD_TESTS=OFF .. -G"$generator" -A "$env:PLATFORM_INPUT" -T "$env:PLATFORMTOOLSET"
+    if ($LastExitCode -ne 0) {
+            throw "Exec: $ErrorMessage"
+    }
+    & cmake --build . --config $env:CONFIGURATION -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+    if ($LastExitCode -ne 0) {
+            throw "Exec: $ErrorMessage"
+    }
+
+after_build:
+    - cd "%APPVEYOR_BUILD_FOLDER%"\build
+    - ps: >-
+        $npplibgit2FileName = "git2.$env:PLATFORM_INPUT.$env:CONFIGURATION.$env:PLATFORMTOOLSET.dll"
+
+        if ($env:CONFIGURATION -eq "Release") {
+           Push-AppveyorArtifact "Release\git2.dll" -FileName "$npplibgit2FileName"
+        }
+
